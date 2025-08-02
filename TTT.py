@@ -26,7 +26,7 @@ def apply_move(b: Board, move: int, player: Player) -> Board:
     return new_board
 
 def evaluate(b: Board, p: Player) -> int:
-    opponent = 'O' if p == 'X' else 'X'
+    opponent = 'O'
     if is_winner(b, p):
         return 1
     elif is_winner(b, opponent):
@@ -36,7 +36,7 @@ def evaluate(b: Board, p: Player) -> int:
 
 # ==== Heuristic Function ====
 def simple_heuristic(board: Board, player: Player) -> int:
-    opponent = 'O' if player == 'X' else 'X'
+    opponent = 'O'
     score = 0
     lines = [[0,1,2],[3,4,5],[6,7,8],
              [0,3,6],[1,4,7],[2,5,8],
@@ -60,7 +60,7 @@ def minimax(b: Board, d: int, maximizing: bool, p: Player, nodes: List[int]) -> 
         return evaluate(b, p) if terminal else simple_heuristic(b, p)
     if terminal:
         return evaluate(b, p)
-    opponent = 'O' if p == 'X' else 'X'
+    opponent = 'O'
     if maximizing:
         best = -float('inf')
         for move in legal_moves(b):
@@ -190,4 +190,4 @@ def run_avg_benchmark(fn, label: str):
 # ==== Run all agents ====
 run_avg_benchmark(best_minimax, "minimax")
 run_avg_benchmark(best_alphabeta, "alphabeta")
-run_avg_benchmark(one_ply_heuristic, "heuristic")
+run_avg_benchmark(best_one_ply_heuristic, "heuristic")
