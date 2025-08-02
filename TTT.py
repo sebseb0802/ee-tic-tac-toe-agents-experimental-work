@@ -51,10 +51,14 @@ def simple_heuristic(board: Board, player: Player) -> int:
             score += 1
     return score
 
-# ==== Full-depth Minimax ====
+# ==== Full-depth Minimax with heuristic at cutoff ====
 def minimax(b: Board, d: int, maximizing: bool, p: Player, nodes: List[int]) -> int:
     nodes[0] += 1
-    if d == 0 or is_draw(b) or is_winner(b, 'X') or is_winner(b, 'O'):
+    terminal = is_draw(b) or is_winner(b, 'X') or is_winner(b, 'O')
+    if d == 0:
+        # At depth limit: return heuristic if not terminal, else exact eval
+        return evaluate(b, p) if terminal else simple_heuristic(b, p)
+    if terminal:
         return evaluate(b, p)
     opponent = 'O' if p == 'X' else 'X'
     if maximizing:
@@ -70,10 +74,14 @@ def minimax(b: Board, d: int, maximizing: bool, p: Player, nodes: List[int]) -> 
             best = min(best, val)
         return best
 
-# ==== Alpha-Beta ====
+# ==== Alpha-Beta with heuristic at cutoff ====
 def alphabeta(b: Board, d: int, alpha: int, beta: int, maximizing: bool, p: Player, nodes: List[int]) -> int:
     nodes[0] += 1
-    if d == 0 or is_draw(b) or is_winner(b, 'X') or is_winner(b, 'O'):
+    terminal = is_draw(b) or is_winner(b, 'X') or is_winner(b, 'O')
+    if d == 0:
+        # At depth limit: heuristic if not terminal else exact eval
+        return evaluate(b, p) if terminal else simple_heuristic(b, p)
+    if terminal:
         return evaluate(b, p)
     opponent = 'O' if p == 'X' else 'X'
     if maximizing:
@@ -92,25 +100,6 @@ def alphabeta(b: Board, d: int, alpha: int, beta: int, maximizing: bool, p: Play
             if beta <= alpha:
                 break
         return value
-
-# ==== Depth-Limited Minimax with Heuristic ====
-def limited_minimax(b: Board, d: int, maximizing: bool, p: Player, nodes: List[int]) -> int:
-    nodes[0] += 1
-    if d == 0 or is_draw(b) or is_winner(b, 'X') or is_winner(b, 'O'):
-        return simple_heuristic(b, p)
-    opponent = 'O' if p == 'X' else 'X'
-    if maximizing:
-        best = -float('inf')
-        for move in legal_moves(b):
-            val = limited_minimax(apply_move(b, move, p), d - 1, False, p, nodes)
-            best = max(best, val)
-        return best
-    else:
-        best = float('inf')
-        for move in legal_moves(b):
-            val = limited_minimax(apply_move(b, move, opponent), d - 1, True, p, nodes)
-            best = min(best, val)
-        return best
 
 # ==== Agent decision wrappers ====
 def best_minimax(b: Board, d: int, p: Player) -> tuple[int, int, int]:
@@ -140,20 +129,7 @@ def best_alphabeta(b: Board, d: int, p: Player) -> tuple[int, int, int]:
     end = time.perf_counter_ns()
     return best_move, end - start, nodes[0]
 
-def best_limited(b: Board, d: int, p: Player) -> tuple[int, int, int]:
-    best_score = -float('inf')
-    best_move = -1
-    nodes = [0]
-    start = time.perf_counter_ns()
-    for move in legal_moves(b):
-        score = limited_minimax(apply_move(b, move, p), d - 1, False, p, nodes)
-        if score > best_score:
-            best_score = score
-            best_move = move
-    end = time.perf_counter_ns()
-    return best_move, end - start, nodes[0]
-
-def best_heuristic(b: Board, d: int, p: Player) -> tuple[int, int, int]:
+def best_one_ply_heuristic(b: Board, d: int, p: Player) -> tuple[int, int, int]:
     best_score = -float('inf')
     best_move = -1
     start = time.perf_counter_ns()
@@ -214,5 +190,4 @@ def run_avg_benchmark(fn, label: str):
 # ==== Run all agents ====
 run_avg_benchmark(best_minimax, "minimax")
 run_avg_benchmark(best_alphabeta, "alphabeta")
-run_avg_benchmark(best_heuristic, "heuristic")
-run_avg_benchmark(best_limited, "limited_minimax")
+run_avg_benchmark(one_ply_heuristic, "heuristic")
